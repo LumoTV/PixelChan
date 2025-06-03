@@ -1,1 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>r/place Clone</title>
+  <style>
+    canvas { border: 1px solid black; }
+    #login, #register { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div id="auth">
+    <div id="register">
+      <h3>Register</h3>
+      <input id="regUser" placeholder="Username" />
+      <input id="regPass" type="password" placeholder="Password" />
+      <button onclick="register()">Register</button>
+    </div>
+    <div id="login">
+      <h3>Login</h3>
+      <input id="logUser" placeholder="Username" />
+      <input id="logPass" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+  </div>
+  <canvas id="board" width="100" height="100"></canvas>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+    const socket = io();
+    let userId = null;
+
+    const pixelSize = 10;
+
+    canvas.width = 100 * pixelSize;
+    canvas.height = 100 * pixelSize;
+
+    canvas.addEventListener("click", (e) => {
+      const x = Math.floor(e.offsetX / pixelSize);
+      const y = Math.floor(e.offsetY / pixelSize);
+      const color = prompt("Color (hex):", "#000000");
+      if (color && userId) {
+        socket.emit("place_pixel", { x, y, color, userId });
+      }
+    });
+
+    socket.on("init", (pixels) => {
+      pixels.forEach(p => drawPixel(p.x, p.y, p.color));
+    });
+
+    socket.on("pixel_placed", (p) => {
+      drawPixel(p.x, p.y, p.color);
+    });
+
+    function drawPixel(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+    }
+
+    async function register() {
+      const username = document.getElementById("regUser").value;
+      const password = document.getElementById("regPass").value;
+      await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      alert("Registered! Now login.");
+    }
+
+    async function login() {
+      const username = document.getElementById("logUser").value;
+      const password = document.getElementById("logPass").value;
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      if (res.ok) {
+        const session = await res.text();
+        userId = username; // Simplified, better to use session data
+        alert("Logged in");
+      } else {
+        alert("Login failed");
+      }
+    }
+  </script>
+</body>
+</html>
 
