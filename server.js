@@ -16,7 +16,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-mongoose.connect("mongodb://localhost:27017/rplace", {
+mongoose.connect("mongoose.connect(process.env.MONGODB_URI || "mongosh "mongodb+srv://cluster0.ap0si7s.mongodb.net/" --apiVersion 1 --username ffriezer56", ...
+", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
