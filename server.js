@@ -8,6 +8,7 @@ const session = require("express-session");
 const bcrypt = require("bcrypt");
 const MongoStore = require("connect-mongo");
 const path = require("path");
+
 const User = require("./models/User");
 const Pixel = require("./models/Pixel");
 
