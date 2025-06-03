@@ -17,11 +17,13 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-mongoose.connect("mongoose.connect(process.env.MONGODB_URI || "mongosh "mongodb+srv://cluster0.ap0si7s.mongodb.net/" --apiVersion 1 --username ffriezer56", ...
-", {
+require("dotenv").config();
+
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
