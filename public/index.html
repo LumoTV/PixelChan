@@ -1,91 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <title>PixelChan</title>
   <style>
-    canvas { border: 1px solid black; }
-    #login, #register { margin-bottom: 10px; }
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: row;
+      background: #eee;
+      user-select: none;
+    }
+    #sidebar {
+      width: 120px;
+      background: #222;
+      color: white;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    button {
+      width: 80px;
+      height: 40px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 5px;
+      border: none;
+      background: #444;
+      color: white;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #666;
+    }
+    #colorPicker {
+      width: 80px;
+      height: 40px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    #instructions {
+      font-size: 12px;
+      line-height: 1.3;
+      margin-top: 15px;
+      text-align: center;
+    }
+    canvas {
+      flex-grow: 1;
+      display: block;
+      background: white;
+      cursor: crosshair;
+    }
+#palette {
+  display: grid;
+  grid-template-columns: repeat(2, 40px);
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.color-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #555;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.color-btn.selected {
+  border: 2px solid white;
+  box-shadow: 0 0 5px white;
+}
+#overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #111;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  font-size: 36px;
+  z-index: 9999;
+}
+
+#countdownText {
+  text-align: center;
+  font-weight: bold;
+}
+
+
   </style>
 </head>
 <body>
-  <div id="auth">
-    <div id="register">
-      <h3>Register</h3>
-      <input id="regUser" placeholder="Username" />
-      <input id="regPass" type="password" placeholder="Password" />
-      <button onclick="register()">Register</button>
+  <div id="sidebar">
+    <button id="zoomIn">+</button>
+    <button id="zoomOut">-</button>
+    <div id="palette">
+      <button class="color-btn selected" style="background:#FF0000;" data-color="#FF0000"></button>
+      <button class="color-btn" style="background:#ff4949;" data-color="#ff4949"></button>
+      <button class="color-btn" style="background:#00FF00;" data-color="#00FF00"></button>
+      <button class="color-btn" style="background:#008300;" data-color="#008300"></button>
+      <button class="color-btn" style="background:#0000FF;" data-color="#0000FF"></button>
+      <button class="color-btn" style="background:#5353ff;" data-color="#5353ff"></button>
+      <button class="color-btn" style="background:#FFFF00;" data-color="#FFFF00"></button>
+      <button class="color-btn" style="background:#FFA500;" data-color="#FFA500"></button>
+      <button class="color-btn" style="background:#800080;" data-color="#800080"></button>
+      <button class="color-btn" style="background:#000000;" data-color="#000000"></button>
+      <button class="color-btn" style="background:#FFFFFF;" data-color="#FFFFFF"></button>
     </div>
-    <div id="login">
-      <h3>Login</h3>
-      <input id="logUser" placeholder="Username" />
-      <input id="logPass" type="password" placeholder="Password" />
-      <button onclick="login()">Login</button>
+
+    <div id="instructions">
+      <p><strong>Instructions :</strong></p>
+      <p>Pan : clic droit + glisser</p>
+      <p>Dessiner : clic gauche</p>
+      <p>Trainée : maintenir <strong>espace</strong> + clic gauche + déplacer souris</p>
+      <p>Zoom : boutons + / -</p>
     </div>
   </div>
-  <canvas id="board" width="100" height="100"></canvas>
+  <canvas id="canvas"></canvas>
+<div id="overlay">
+  <div id="countdownText">Chargement...</div>
+</div>
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const canvas = document.getElementById("board");
-    const ctx = canvas.getContext("2d");
-    const socket = io();
-    let userId = null;
-
-    const pixelSize = 10;
-
-    canvas.width = 100 * pixelSize;
-    canvas.height = 100 * pixelSize;
-
-    canvas.addEventListener("click", (e) => {
-      const x = Math.floor(e.offsetX / pixelSize);
-      const y = Math.floor(e.offsetY / pixelSize);
-      const color = prompt("Color (hex):", "#000000");
-      if (color && userId) {
-        socket.emit("place_pixel", { x, y, color, userId });
-      }
-    });
-
-    socket.on("init", (pixels) => {
-      pixels.forEach(p => drawPixel(p.x, p.y, p.color));
-    });
-
-    socket.on("pixel_placed", (p) => {
-      drawPixel(p.x, p.y, p.color);
-    });
-
-    function drawPixel(x, y, color) {
-      ctx.fillStyle = color;
-      ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
-    }
-
-    async function register() {
-      const username = document.getElementById("regUser").value;
-      const password = document.getElementById("regPass").value;
-      await fetch("/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
-      alert("Registered! Now login.");
-    }
-
-    async function login() {
-      const username = document.getElementById("logUser").value;
-      const password = document.getElementById("logPass").value;
-      const res = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
-      if (res.ok) {
-        const session = await res.text();
-        userId = username; // Simplified, better to use session data
-        alert("Logged in");
-      } else {
-        alert("Login failed");
-      }
-    }
-  </script>
+  <script src="/script.js"></script>
 </body>
 </html>
-
