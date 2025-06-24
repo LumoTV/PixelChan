@@ -24,7 +24,7 @@ let lastPos = null;
 function showCountdownOverlay() {
   const overlay = document.getElementById('overlay');
   const countdownText = document.getElementById('countdownText');
-  const targetDate = new Date('2025-06-24T19:00:00');
+  const targetDate = new Date('2025-06-24T19:20:00');
 
   function update() {
     const now = new Date();
